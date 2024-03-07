@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'newNote.dart';
 import 'profile.dart';
+import 'contacts.dart';
 
 void main() {
   runApp(const MyApp());
@@ -13,10 +14,9 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Flutter Demo',
-      // theme: ThemeData(
-      // colorScheme: ColorScheme.fromSwatch(primarySwatch: Colors.teal),
-      //   useMaterial3: true,
-      //   ),
+      theme: ThemeData.light(),
+      darkTheme: ThemeData.dark(),
+      themeMode: ThemeMode.light,
       home: const MyHomePage(title: 'Flutter Demo Home Page'),
     );
   }
@@ -34,6 +34,8 @@ class MyHomePage extends StatefulWidget {
 class _MyHomePageState extends State<MyHomePage> {
   int _counter = 0;
   bool _isDarkMode = false;
+  TextEditingController _textController1 = TextEditingController();
+  TextEditingController _textController2 = TextEditingController();
 
   void _incrementCounter() {
     setState(() {
@@ -49,9 +51,6 @@ class _MyHomePageState extends State<MyHomePage> {
 
   @override
   Widget build(BuildContext context) {
-    final List<String> entries = <String>['A', 'B', 'C'];
-    final List<int> colorCodes = <int>[600, 500, 100];
-
     return Theme(
       data: _isDarkMode ? ThemeData.dark() : ThemeData.light(),
       child: Scaffold(
@@ -60,12 +59,12 @@ class _MyHomePageState extends State<MyHomePage> {
           elevation: 0,
           flexibleSpace: Container(
             decoration: BoxDecoration(
-              color: Color(0xff1ebd98),
+              color: const Color(0xff1ebd98),
             ),
             child: Row(
               children: [
                 IconButton(
-                  icon: Icon(Icons.account_circle),
+                  icon: const Icon(Icons.account_circle),
                   onPressed: () {
                     Navigator.push(
                       context,
@@ -74,7 +73,7 @@ class _MyHomePageState extends State<MyHomePage> {
                   },
                 ),
                 PopupMenuButton<String>(
-                  icon: Icon(Icons.menu),
+                  icon: const Icon(Icons.menu),
                   onSelected: (String value) {
                     if (value == 'darkmode') {
                       _toggleTheme();
@@ -88,7 +87,7 @@ class _MyHomePageState extends State<MyHomePage> {
                     ),
                     PopupMenuItem<String>(
                       value: 'settings',
-                      child: Text('Settings'), // settings
+                      child: const Text('Settings'), // settings
                     ),
                   ],
                 ),
@@ -100,33 +99,64 @@ class _MyHomePageState extends State<MyHomePage> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Text(
+              const Text(
                 'Recent Notes',
                 style: TextStyle(fontSize: 15, fontWeight: FontWeight.normal),
               ),
               ListView.separated(
                 padding: const EdgeInsets.all(8),
-                itemCount: entries.length,
+                itemCount: 3,
                 shrinkWrap: true,
                 itemBuilder: (BuildContext context, int index) {
-                  return Container(
-                    height: 50,
-                    decoration: BoxDecoration(
-                      border: Border.all(color: Colors.black),
-                      borderRadius: BorderRadius.circular(10), // Round corners
+                  return InkWell(
+                    onTap: () async {
+                      final result = await Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => NewNotePage(
+                            textController: index == 0
+                                ? _textController1
+                                : _textController2,
+                          ),
+                        ),
+                      );
+
+                      // If result is not null, update text controller with the result
+                      if (result != null) {
+                        setState(() {
+                          if (index == 0) {
+                            _textController1.text = result;
+                          } else {
+                            _textController2.text = result;
+                          }
+                        });
+                      }
+                    },
+                    child: Container(
+                      height: 50,
+                      decoration: BoxDecoration(
+                        border: Border.all(color: Colors.black),
+                        borderRadius:
+                            BorderRadius.circular(10), // Round corners
+                      ),
+                      child: Center(
+                        child: Text(
+                          index == 0
+                              ? _textController1.text
+                              : _textController2.text,
+                        ),
+                      ),
                     ),
-                    child: Center(child: Text('Entry ${entries[index]}')),
                   );
                 },
                 separatorBuilder: (BuildContext context, int index) =>
                     const Divider(),
               ),
-              SizedBox(height: 20), // Add space below the ListView
-              Text(
+              SizedBox(height: 20),
+              const Text(
                 'Folders',
                 style: TextStyle(fontSize: 15, fontWeight: FontWeight.normal),
               ),
-              // Additional boxes
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: List.generate(
@@ -134,10 +164,10 @@ class _MyHomePageState extends State<MyHomePage> {
                   (index) => Container(
                     width: 90,
                     height: 90,
-                    margin: EdgeInsets.all(5),
+                    margin: const EdgeInsets.all(5),
                     decoration: BoxDecoration(
                       border: Border.all(color: Colors.black),
-                      borderRadius: BorderRadius.circular(10), // Round corners
+                      borderRadius: BorderRadius.circular(10),
                     ),
                   ),
                 ),
@@ -149,10 +179,10 @@ class _MyHomePageState extends State<MyHomePage> {
                   (index) => Container(
                     width: 90,
                     height: 90,
-                    margin: EdgeInsets.all(5),
+                    margin: const EdgeInsets.all(5),
                     decoration: BoxDecoration(
                       border: Border.all(color: Colors.black),
-                      borderRadius: BorderRadius.circular(10), // Round corners
+                      borderRadius: BorderRadius.circular(10),
                     ),
                   ),
                 ),
@@ -161,11 +191,21 @@ class _MyHomePageState extends State<MyHomePage> {
           ),
         ),
         floatingActionButton: FloatingActionButton(
-          onPressed: () {
-            Navigator.push(
+          onPressed: () async {
+            final result = await Navigator.push(
               context,
-              MaterialPageRoute(builder: (context) => NewNotePage()),
+              MaterialPageRoute(
+                builder: (context) => NewNotePage(
+                  textController: _textController2,
+                ),
+              ),
             );
+
+            if (result != null) {
+              setState(() {
+                _textController2.text = result;
+              });
+            }
           },
           tooltip: 'New note',
           child: const Icon(Icons.add),
@@ -173,27 +213,33 @@ class _MyHomePageState extends State<MyHomePage> {
         floatingActionButtonLocation:
             FloatingActionButtonLocation.centerDocked, // Center the plus icon
         bottomNavigationBar: BottomAppBar(
-          shape: CircularNotchedRectangle(),
+          shape: const CircularNotchedRectangle(),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               IconButton(
-                icon: Icon(Icons.edit),
+                icon: const Icon(Icons.edit),
                 onPressed: () {
                   // these will eventually do things
                 },
               ),
               IconButton(
-                icon: Icon(Icons.list),
+                icon: const Icon(Icons.list),
                 onPressed: () {},
               ),
-              SizedBox(),
+              const SizedBox(),
               IconButton(
-                icon: Icon(Icons.account_circle),
-                onPressed: () {},
+                icon: const Icon(Icons.account_circle),
+                onPressed: () async {
+                  await Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                        builder: (context) => ContactDetailsPage()),
+                  );
+                },
               ),
               IconButton(
-                icon: Icon(Icons.shopping_cart),
+                icon: const Icon(Icons.shopping_cart),
                 onPressed: () {},
               ),
             ],
